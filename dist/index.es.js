@@ -1,10 +1,13 @@
-import { withModulesManager, formatMessage, FormattedMessage } from '@openimis/fe-core';
+import { useModulesManager, formatMessage, Helmet, FormattedMessage } from '@openimis/fe-core';
 import React from 'react';
 import AssessmentIcon from '@material-ui/icons/Assessment';
 import flatten from 'flat';
-import { Box, Paper, Typography } from '@material-ui/core';
-import { withTheme, withStyles } from '@material-ui/core/styles';
-import { injectIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
+import { Paper, Typography, Grid, Tab } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import { useTabStyles } from '@openimis/fe-tasaf_common';
+import { useIntl } from 'react-intl';
 
 function _defineProperty(e, r, t) {
   return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
@@ -13,6 +16,15 @@ function _defineProperty(e, r, t) {
     configurable: !0,
     writable: !0
   }) : e[r] = t, e;
+}
+function _extends() {
+  return _extends = Object.assign ? Object.assign.bind() : function (n) {
+    for (var e = 1; e < arguments.length; e++) {
+      var t = arguments[e];
+      for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);
+    }
+    return n;
+  }, _extends.apply(null, arguments);
 }
 function ownKeys(e, r) {
   var t = Object.keys(e);
@@ -50,41 +62,100 @@ function _toPropertyKey(t) {
   return "symbol" == typeof i ? i : i + "";
 }
 
+var noReports = "You have no reports available.";
 var messages_en = {
 	"menu.reports": "Reports",
 	"page.title": "Reports",
-	"placeholder.text": "Reports module - coming soon"
+	noReports: noReports
 };
 
-var styles = function styles(theme) {
+var REPORT_TABS_CONTRIBUTION_KEY = 'report.ReportTabs';
+var useStyles = makeStyles(function (theme) {
   return {
-    root: {
+    page: theme.page,
+    paper: theme.paper.paper,
+    tableTitle: theme.table.title,
+    empty: {
       padding: theme.spacing(3)
     },
-    paper: {
-      padding: theme.spacing(3),
-      textAlign: 'center',
-      marginTop: theme.spacing(3)
+    wrap: {
+      '&&': {
+        flexWrap: 'wrap'
+      }
     }
   };
-};
-function ReportsPage(_ref) {
-  var classes = _ref.classes,
-    intl = _ref.intl;
-    _ref.modulesManager;
-  return /*#__PURE__*/React.createElement(Box, {
-    className: classes.root
-  }, /*#__PURE__*/React.createElement(Paper, {
+});
+
+// Each module contributes a section { key, module, label, rights, position, reports: [{ key, label,
+// component, props }] }. The menu opens a section (?tab=<section>); its reports are the tabs.
+function ReportsPage() {
+  var _modulesManager$getCo, _sections$find, _section$reports, _reports$find, _report$props;
+  var classes = useStyles();
+  var tabClasses = useTabStyles();
+  var intl = useIntl();
+  var history = useHistory();
+  var location = useLocation();
+  var modulesManager = useModulesManager();
+  var rights = useSelector(function (store) {
+    var _store$core$user$i_us, _store$core;
+    return (_store$core$user$i_us = (_store$core = store.core) === null || _store$core === void 0 || (_store$core = _store$core.user) === null || _store$core === void 0 || (_store$core = _store$core.i_user) === null || _store$core === void 0 ? void 0 : _store$core.rights) !== null && _store$core$user$i_us !== void 0 ? _store$core$user$i_us : [];
+  });
+  var sections = ((_modulesManager$getCo = modulesManager.getContribs(REPORT_TABS_CONTRIBUTION_KEY)) !== null && _modulesManager$getCo !== void 0 ? _modulesManager$getCo : []).filter(function (s) {
+    var _s$rights;
+    return !((_s$rights = s.rights) !== null && _s$rights !== void 0 && _s$rights.length) || s.rights.some(function (r) {
+      return rights.includes(r);
+    });
+  }).sort(function (a, b) {
+    var _a$position, _b$position;
+    return ((_a$position = a.position) !== null && _a$position !== void 0 ? _a$position : 99) - ((_b$position = b.position) !== null && _b$position !== void 0 ? _b$position : 99);
+  });
+  var params = new URLSearchParams(location.search);
+  var section = (_sections$find = sections.find(function (s) {
+    return s.key === params.get('tab');
+  })) !== null && _sections$find !== void 0 ? _sections$find : sections[0];
+  var reports = (_section$reports = section === null || section === void 0 ? void 0 : section.reports) !== null && _section$reports !== void 0 ? _section$reports : [];
+  var report = (_reports$find = reports.find(function (r) {
+    return r.key === params.get('report');
+  })) !== null && _reports$find !== void 0 ? _reports$find : reports[0];
+  var onChange = function onChange(_, key) {
+    return history.replace({
+      pathname: location.pathname,
+      search: "?tab=".concat(section.key, "&report=").concat(key)
+    });
+  };
+  if (!report) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: classes.page
+    }, /*#__PURE__*/React.createElement(Paper, {
+      className: classes.paper
+    }, /*#__PURE__*/React.createElement(Typography, {
+      className: classes.empty,
+      color: "textSecondary"
+    }, formatMessage(intl, 'report', 'noReports'))));
+  }
+  var Panel = report.component;
+  return /*#__PURE__*/React.createElement("div", {
+    className: classes.page
+  }, /*#__PURE__*/React.createElement(Helmet, {
+    title: formatMessage(intl, section.module, section.label)
+  }), /*#__PURE__*/React.createElement(Paper, {
     className: classes.paper
-  }, /*#__PURE__*/React.createElement(Typography, {
-    variant: "h4",
-    gutterBottom: true
-  }, formatMessage(intl, 'report', 'page.title')), /*#__PURE__*/React.createElement(Typography, {
-    variant: "body1",
-    color: "textSecondary"
-  }, formatMessage(intl, 'report', 'placeholder.text'))));
+  }, /*#__PURE__*/React.createElement(Grid, {
+    container: true,
+    className: "".concat(classes.tableTitle, " ").concat(tabClasses.tabs, " ").concat(classes.wrap)
+  }, reports.map(function (r) {
+    return /*#__PURE__*/React.createElement(Tab, {
+      key: r.key,
+      value: r.key,
+      selected: r.key === report.key,
+      onChange: onChange,
+      className: r.key === report.key ? tabClasses.selectedTab : tabClasses.unselectedTab,
+      label: formatMessage(intl, section.module, r.label)
+    });
+  })), /*#__PURE__*/React.createElement(Panel, _extends({
+    key: "".concat(section.key, ".").concat(report.key)
+  }, (_report$props = report.props) !== null && _report$props !== void 0 ? _report$props : {}))));
 }
-var ReportsPage$1 = injectIntl(withModulesManager(withTheme(withStyles(styles)(ReportsPage))));
 
 var ROUTE_REPORTS = 'reports';
 var DEFAULT_CONFIG = {
@@ -94,7 +165,7 @@ var DEFAULT_CONFIG = {
   }],
   "core.Router": [{
     path: ROUTE_REPORTS,
-    component: ReportsPage$1
+    component: ReportsPage
   }],
   "socialProtection.MainMenu": [{
     text: /*#__PURE__*/React.createElement(FormattedMessage, {
@@ -117,5 +188,5 @@ var ReportModule = function ReportModule(cfg) {
   return _objectSpread2(_objectSpread2({}, DEFAULT_CONFIG), cfg);
 };
 
-export { ReportModule };
+export { REPORT_TABS_CONTRIBUTION_KEY, ReportModule };
 //# sourceMappingURL=index.es.js.map

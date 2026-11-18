@@ -3,7 +3,7 @@ import React from 'react';
 import AssessmentIcon from '@material-ui/icons/Assessment';
 import flatten from 'flat';
 import messages_en from "./translations/en.json";
-import ReportsPage from './pages/ReportsPage';
+import ReportsPage, { REPORT_TABS_CONTRIBUTION_KEY } from './pages/ReportsPage';
 
 const ROUTE_REPORTS = 'reports';
 
@@ -25,6 +25,8 @@ const DEFAULT_CONFIG = {
     { key: 'report.route.reports', ref: ROUTE_REPORTS },
   ],
 }
+
+export { REPORT_TABS_CONTRIBUTION_KEY };
 
 export const ReportModule = (cfg) => {
   return { ...DEFAULT_CONFIG, ...cfg };
